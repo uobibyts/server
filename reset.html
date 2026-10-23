@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VAULT-OS reset</title>
+<style>body{background:#060906;color:#7ec850;font-family:monospace;padding:24px;max-width:480px;margin:auto}button{width:100%;padding:14px;margin-top:16px;background:#142014;color:#7ec850;border:1px solid #2f5a2f;font-size:16px}a{color:#7ec850}#m{margin-top:16px}</style></head>
+<body><h2>VAULT-OS reset</h2>
+<p>Ye is browser ka poora vault delete karega (account, files, alerts). Uske baad site par naya username/password bana sakte ho.</p>
+<button id="b">RESET VAULT NOW</button><div id="m"></div>
+<script>
+document.getElementById('b').onclick=function(){
+  var m=document.getElementById('m');
+  try{localStorage.clear();sessionStorage.clear()}catch(e){}
+  function done(t){m.innerHTML=t+'<br><br><a href="./">Ab site kholo aur naya account banao</a>'}
+  try{
+    var r=indexedDB.deleteDatabase('vaultos');
+    r.onsuccess=function(){done('Done. Vault reset ho gaya.')};
+    r.onerror=function(){done('Account hata diya (files ka cleanup fail hua, par login ab naya banega).')};
+    r.onblocked=function(){done('Account hata diya. Agar site ka dusra tab khula hai to use band kar do.')};
+  }catch(e){done('Account hata diya.')}
+};
+</script></body></html>

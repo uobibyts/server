@@ -1,0 +1,209 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VAULT-OS // TACTICAL</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{--bg:#070a06;--pn:#0d130b;--ln:#2f4a22;--g:#8fd14f;--a:#ffb000;--r:#ff3b30;--t:#b9c9a8;--d:#5d6f4e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:13px/1.45 "Courier New",monospace;min-height:100vh}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);z-index:99}
+h1,h2{margin:0;letter-spacing:3px;text-transform:uppercase}h2{font-size:12px;color:var(--a);border-bottom:1px solid var(--ln);padding-bottom:6px;margin-bottom:8px}
+.hud{clip-path:polygon(0 10px,10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);background:var(--pn);border:1px solid var(--ln);padding:12px}
+input,select,textarea,button{background:#050803;color:var(--g);border:1px solid var(--ln);font:inherit;padding:7px 9px;border-radius:0}
+button{cursor:pointer;text-transform:uppercase;letter-spacing:1px;background:#14200e}button:hover{background:var(--g);color:#000}button.d{color:var(--r)}button.d:hover{background:var(--r);color:#000}
+#top{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:2px solid var(--g);flex-wrap:wrap;gap:8px}
+h1{color:var(--g);font-size:17px}.dot{display:inline-block;width:9px;height:9px;background:var(--g);border-radius:50%;box-shadow:0 0 8px var(--g);animation:p 1.5s infinite}@keyframes p{50%{opacity:.25}}
+nav{display:flex;gap:6px;padding:10px 16px;flex-wrap:wrap}nav button.on{background:var(--g);color:#000}
+main{padding:0 16px 24px}.tab{display:none}.tab.on{display:block}.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}.row input{flex:1;min-width:120px}
+.al{padding:5px 8px;border-left:3px solid var(--g);margin:3px 0;background:#0a0f08}.al.warn{border-color:var(--a)}.al.crit{border-color:var(--r);color:#ff9d96}.al small{color:var(--d)}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{border-bottom:1px solid #1b2c13;padding:4px;text-align:left;vertical-align:top}th{color:var(--a)}
+.fi{padding:5px;cursor:pointer;border-bottom:1px solid #16230f}.fi:hover{background:#16230f;color:var(--g)}
+#ed{width:100%;height:420px;resize:vertical;tab-size:4;white-space:pre;color:#cfe8b0}
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100}#login .hud{width:340px}#login input{width:100%;margin:5px 0}
+.v-DANGEROUS{color:var(--r)}.v-SUSPICIOUS{color:var(--a)}pre{white-space:pre-wrap;margin:6px 0;background:#050803;padding:8px;border:1px solid var(--ln);max-height:260px;overflow:auto}
+iframe{width:100%;height:420px;border:1px solid var(--ln);background:#fff}small.m{color:var(--d)}
+.tg{display:grid;gap:12px;grid-template-columns:3fr 1fr}@media(max-width:900px){.tg{grid-template-columns:1fr}}
+#tbox{position:relative;clear:both;width:100%;height:480px;border:1px solid var(--ln);background:#000;overflow:hidden}#tmap{position:absolute;inset:0;background:#000}
+.tov{position:absolute;inset:0;pointer-events:none;z-index:500}
+.tov.gr{background:linear-gradient(rgba(143,209,79,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(143,209,79,.07) 1px,transparent 1px);background-size:40px 40px}
+.tov.sc{background:linear-gradient(180deg,transparent,rgba(143,209,79,.16),transparent);height:70px;animation:tsc 4s linear infinite}@keyframes tsc{from{transform:translateY(-80px)}to{transform:translateY(560px)}}
+.tov.vg{box-shadow:inset 0 0 90px rgba(0,0,0,.75)}
+#thud{position:absolute;left:10px;bottom:10px;z-index:600;pointer-events:none;background:rgba(5,8,3,.82);border:1px solid var(--ln);padding:6px 10px;font-size:11px;color:var(--g);letter-spacing:1px;min-width:170px}
+#thud b{color:var(--a)}#thst{color:var(--a);margin-bottom:3px}
+#tbox[data-s=lock] #thst,#tbox[data-s=track] #thst{color:var(--g)}
+.pinwrap{background:none;border:0}.pin{position:relative;width:0;height:0}
+.pin .dot{position:absolute;left:-6px;top:-6px;width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 12px var(--c)}
+.pin .ring{position:absolute;left:-16px;top:-16px;width:32px;height:32px;border:1px solid var(--c);border-radius:50%;animation:tpl 2s infinite}@keyframes tpl{from{transform:scale(.4);opacity:1}to{transform:scale(1.6);opacity:0}}
+.pin.off{opacity:.45}.pin.off .ring{animation:none}
+.pin .call{position:absolute;left:14px;top:-44px;white-space:nowrap;border:1px solid var(--c);background:rgba(5,8,3,.88);padding:2px 7px;color:var(--c);font:11px "Courier New",monospace;display:none}
+.pin.show .call{display:block}.pin .call b{display:block;color:var(--c);letter-spacing:1px}.pin .call span{color:var(--t);font-size:10px}
+.leaflet-container{font:inherit}.leaflet-control-zoom a{background:#14200e!important;color:var(--g)!important;border-color:var(--ln)!important}
+.op{padding:6px 8px;border-left:3px solid var(--g);margin:4px 0;background:#0a0f08;cursor:pointer}.op:hover{background:#16230f}.op.off{opacity:.5}.op code{color:var(--g);font-size:11px}.op a{color:var(--g);float:right}
+button.s{color:var(--r)}
+@media(max-width:600px){#tbox{height:360px}}
+.th2{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
+</style></head><body>
+<div id="login"><div class="hud"><h1>▣ VAULT-OS</h1><p><small class="m" id="lm">AUTHENTICATE TO PROCEED</small></p>
+<input id="lu" placeholder="CALLSIGN" autocomplete="username"><input id="lp" type="password" placeholder="PASSCODE" autocomplete="current-password"><button id="lb" style="width:100%">Authenticate</button><p id="le" style="color:var(--r)"></p>
+<small class="m">Your IP, device and (after permission) location are logged on login.</small></div></div>
+<div id="top"><h1><span class="dot"></span> VAULT-OS // TACTICAL COMMAND</h1><div><span id="clock"></span> <button id="fv">🎙 Friday: OFF</button> <button id="lo" class="d">Logout</button></div></div>
+<nav id="nav"></nav>
+<div id="fs" style="padding:0 16px 6px;color:var(--g);font-size:12px;min-height:16px"></div><audio id="fa" preload="auto"></audio>
+<main>
+<section class="tab on" id="t-ops"><div class="grid"><div class="hud"><h2>Live Alerts <button id="clr" style="float:right;padding:1px 6px">clear</button></h2><div id="alerts"></div></div>
+<div class="hud"><h2>Access Log (who logged in)</h2><div style="overflow:auto;max-height:480px"><table id="logs"></table></div></div></div></section>
+<section class="tab" id="t-vault"><div class="grid" style="grid-template-columns:minmax(260px,1fr) 3fr"><div class="hud"><h2>Vault</h2><div class="row"><button id="nf">+File</button><button id="nd">+Folder</button><button id="up">Upload</button><input type="file" id="upi" hidden multiple></div><div id="crumb" style="color:var(--g);margin-bottom:6px"></div><div id="list"></div></div>
+<div class="hud"><h2 id="fn">Editor</h2><div class="row" id="bar" style="display:none"><span id="lang" style="color:var(--g)"></span><button id="sv">Save (Ctrl+S)</button><button id="rn">Run</button><button id="pv">Preview</button><button id="dl">Download</button><button id="rm" class="d">Delete</button></div>
+<div id="view"><small class="m">Select a file.</small></div><pre id="out" style="display:none"></pre></div></div></section>
+<section class="tab" id="t-scan"><div class="grid"><div class="hud"><h2>Threat Scanner</h2><small class="m">Paste a link, email, SMS/WhatsApp message or number. This is a heuristic analysis; dangerous results are auto-blocked with an alert.</small>
+<textarea id="st" rows="8" style="width:100%;margin:8px 0" placeholder="Paste suspicious link / email / message..."></textarea><button id="sb">Scan</button><div id="sr"></div></div>
+<div class="hud"><h2>Blocklist (links / numbers / domains)</h2><div class="row"><input id="bi" placeholder="evil.com or +923001234567"><button id="ba">Block</button></div><div id="bl"></div></div></div></section>
+<section class="tab" id="t-mon"><div class="grid"><div class="hud"><h2>Watch Targets</h2><div class="row"><select id="mk"><option value="site">Website uptime</option><option value="page">Page change (social profile etc.)</option><option value="port">Localhost port</option></select><input id="mt" placeholder="https://site.com  |  3000  |  host:port"><button id="ma">Add</button></div><div id="ml"></div>
+<small class="m">Every file added, removed or changed in the Vault folder is monitored automatically (every 15s). Alerts: dashboard + browser notification + optional Telegram.</small></div></div></section>
+<section class="tab" id="t-vis"><div class="grid"><div class="hud"><h2>Visitors (every IP) <button id="ai" style="float:right;padding:1px 6px">Friday summary</button></h2><pre id="sm" style="display:none"></pre><div style="overflow:auto;max-height:560px"><table id="vl"></table></div><small class="m">Unknown = an IP that has never logged in. Location is IP-based (approximate). The real location of an attacker using a VPN cannot be found.</small></div></div></section>
+<section class="tab" id="t-trk"><div class="tg"><div class="hud"><h2 class="th2">Satellite Tracking Grid <span><button id="trl" style="display:none;padding:1px 6px">Re-lock</button> <button id="tfit" style="padding:1px 6px">Show all</button></span></h2>
+<div id="tbox" data-s="idle"><div id="tmap"></div><div class="tov gr"></div><div class="tov sc"></div><div class="tov vg"></div><div id="thud"><div id="thst">AWAITING SIGNAL</div><div id="trd"></div></div></div></div>
+<div><div class="hud"><h2>Live Share</h2><div>CALLSIGN: <b id="tme" style="color:var(--g)"></b></div><small class="m">Location sharing starts automatically on login (after you allow it in the browser). It stops on logout.</small><div id="tstt" style="margin-top:8px;color:var(--a)">Waiting for location permission...</div></div>
+<div class="hud" style="margin-top:12px"><h2 class="th2">Active Operatives <span id="tcnt" style="color:var(--g)">0</span></h2><div id="tlist"></div></div></div></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let cur='',file=null,last=0,loc=false,seen=0,ME='';
+async function api(p,b,m){const o=b===undefined&&!m?{}:{method:'POST',headers:{'X-Req':'1','Content-Type':'application/json'},body:JSON.stringify(b||{})};const r=await fetch(p,o);let j={};try{j=await r.json()}catch(e){}if(r.status==401&&p!='/api/login'){showLogin()}if(!r.ok)throw j;return j}
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tabs=[['ops','Operations'],['vault','Vault'],['scan','Threat Scan'],['mon','Monitors'],['vis','Visitors + Friday'],['trk','Tracker']];
+$('nav').innerHTML=tabs.map(t=>`<button data-t="${t[0]}" class="${t[0]=='ops'?'on':''}">${t[1]}</button>`).join('');
+$('nav').onclick=e=>{const t=e.target.dataset.t;if(!t)return;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id=='t-'+t));document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x.dataset.t==t));if(t=='vault')ls();if(t=='trk'){tInit();setTimeout(()=>{TM&&TM.invalidateSize();loadTrk()},60)}}
+setInterval(()=>$('clock').textContent=new Date().toLocaleTimeString(),1000);
+// auth
+let setup=false;async function showLogin(){const m=await fetch('/api/me').then(r=>r.json());setup=m.setup;if(m.user){ME=m.user;$('login').style.display='none';boot();tAuto();return}$('login').style.display='flex';$('lm').textContent=setup?'FIRST RUN: CREATE COMMANDER (password min 10 chars)':'AUTHENTICATE TO PROCEED';$('lb').textContent=setup?'Create account':'Authenticate'}
+$('lb').onclick=async()=>{$('le').textContent='';try{if(setup){await api('/api/setup',{user:$('lu').value,pw:$('lp').value})}
+let dev;try{dev=localStorage.dev||(localStorage.dev=uuid())}catch(e){dev=uuid()}const r=await api('/api/login',{user:$('lu').value,pw:$('lp').value,device:dev});$('lp').value='';
+if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>api('/api/geo',{id:r.login_id,lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy}).catch(()=>{}),()=>{},{enableHighAccuracy:true,timeout:15000});
+if('Notification' in window&&Notification.permission=='default')Notification.requestPermission();showLogin()}catch(e){$('le').textContent=e.error||e.message||'Error'}}
+$('lp').onkeydown=e=>{if(e.key=='Enter')$('lb').click()};$('lo').onclick=async()=>{await api('/api/logout',{});location.reload()};
+let tm;function boot(){clearInterval(tm);poll();tm=setInterval(poll,5000)}
+function beep(){try{const c=new AudioContext(),o=c.createOscillator();o.frequency.value=880;o.connect(c.destination);o.start();setTimeout(()=>o.stop(),180)}catch(e){}}
+async function poll(){let s;try{s=await api('/api/state')}catch(e){return}loadVis();if(TM)loadTrk();
+$('alerts').innerHTML=s.alerts.map(a=>`<div class="al ${a.level}"><small>${new Date(a.ts*1000).toLocaleString()}</small><br>${esc(a.msg)}</div>`).join('')||'<small class="m">No alerts</small>';
+const mx=Math.max(0,...s.alerts.map(a=>a.id));if(seen&&mx>seen){s.alerts.filter(a=>a.id>seen&&a.level!='info').forEach(a=>{beep();if(Notification.permission=='granted')new Notification('VAULT-OS '+a.level.toUpperCase(),{body:a.msg})})}seen=mx;
+$('logs').innerHTML='<tr><th>Time</th><th>User</th><th>IP / Geo</th><th>Location</th><th></th></tr>'+s.logins.map(l=>`<tr><td>${new Date(l.ts*1000).toLocaleString()}</td><td>${esc(l.user)}</td><td>${esc(l.ip)}<br><small class="m">${esc(l.geo||'')}</small><br><small class="m">${esc((l.ua||'').slice(0,50))}</small></td><td>${l.lat!=null?`<a style="color:var(--g)" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${l.lat}&mlon=${l.lon}#map=15/${l.lat}/${l.lon}">${l.lat.toFixed(4)}, ${l.lon.toFixed(4)}</a>`:'-'}</td><td style="color:${l.ok?(l.new?'var(--r)':'var(--g)'):'var(--a)'}">${l.ok?(l.new?'NEW DEVICE':'OK'):'FAILED'}</td></tr>`).join('');
+$('bl').innerHTML=s.block.map(b=>`<div class="fi">${esc(b)} <button class="d" style="float:right;padding:0 6px" data-ub="${esc(b)}">x</button></div>`).join('')||'<small class="m">Empty</small>';
+$('ml').innerHTML=s.monitors.map(m=>`<div class="fi">[${m.kind}] ${esc(m.target)} — <b style="color:${m.state=='UP'?'var(--g)':m.state?'var(--r)':'var(--d)'}">${m.state||'PENDING'}</b><button class="d" style="float:right;padding:0 6px" data-md="${m.id}">x</button></div>`).join('')||'<small class="m">Nothing watched</small>'}
+$('bl').onclick=async e=>{if(e.target.dataset.ub){await api('/api/unblock',{item:e.target.dataset.ub});poll()}};
+$('ml').onclick=async e=>{if(e.target.dataset.md){await api('/api/mon_del',{id:e.target.dataset.md});poll()}};
+$('clr').onclick=async()=>{await api('/api/clear_alerts',{});seen=0;poll()};
+$('ba').onclick=async()=>{if($('bi').value){await api('/api/block',{item:$('bi').value});$('bi').value='';poll()}};
+$('ma').onclick=async()=>{if($('mt').value){try{await api('/api/mon_add',{kind:$('mk').value,target:$('mt').value});$('mt').value='';poll()}catch(e){alert(e.error)}}};
+$('sb').onclick=async()=>{const r=await api('/api/scan',{text:$('st').value});$('sr').innerHTML=`<h2 style="margin-top:10px">Verdict: <span class="v-${r.verdict.split(' ')[0]}">${r.verdict}</span> (score ${r.score})</h2>`+r.urls.map(u=>`<div class="al ${u.score>=5?'crit':u.score>=3?'warn':''}">${esc(u.url)}<br><small>${u.why.map(esc).join(' · ')||'no red flags'}</small></div>`).join('')+r.notes.map(n=>`<div class="al warn">${esc(n)}</div>`).join('');poll()};
+async function loadVis(){let v;try{v=await api('/api/visitors')}catch(e){return}
+$('vl').innerHTML='<tr><th>IP / Location</th><th>Activity</th><th></th></tr>'+v.map(x=>`<tr><td><b style="color:${x.status=='unknown'?'var(--r)':x.status=='blocked'?'var(--d)':'var(--g)'}">${esc(x.ip)} [${x.status}]</b><br><small class="m">${esc(x.geo||'locating...')}</small>${x.lat!=null?`<br><a style="color:var(--g)" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${x.lat}&mlon=${x.lon}#map=10/${x.lat}/${x.lon}">map</a>`:''}</td><td><small class="m">hits ${x.hits} · ${new Date(x.last*1000).toLocaleString()}${x.flags?' · ⚠ '+esc(x.flags):''}<br>${esc((x.ua||'').slice(0,70))}<br>${esc(x.paths||'')}</small></td><td>${x.status=='blocked'?`<button data-ipa="unblock" data-ip="${esc(x.ip)}">Unblock</button>`:`<button class="d" data-ipa="block" data-ip="${esc(x.ip)}">Block</button>`}${x.status=='unknown'?`<button data-ipa="allow" data-ip="${esc(x.ip)}">Allow</button>`:''}</td></tr>`).join('')}
+$('vl').onclick=async e=>{const a=e.target.dataset.ipa;if(a){try{await api('/api/ip'+a,{ip:e.target.dataset.ip})}catch(x){alert(x.error)}loadVis()}};
+$('ai').onclick=()=>runSummary(false);
+// vault
+const TPL={html:'<!DOCTYPE html>\n<html>\n<head><title>Page</title></head>\n<body>\n<h1>Hello</h1>\n</body>\n</html>\n',py:'print("hello")\n',cpp:'#include <iostream>\nint main(){ std::cout<<"hello\\n"; }\n',c:'#include <stdio.h>\nint main(){ puts("hello"); }\n',js:'console.log("hello")\n'};
+const LN={html:'HTML • live preview',htm:'HTML • live preview',py:'PYTHON • run',cpp:'C++ • compile & run',cc:'C++ • compile & run',c:'C • compile & run',js:'JAVASCRIPT • run (Node)',css:'CSS',json:'JSON',md:'MARKDOWN',txt:'TEXT'};
+const ext=n=>(n.split('.').pop()||'').toLowerCase();const full=n=>(cur?cur+'/':'')+n;
+async function ls(){const it=await api('/api/files?path='+encodeURIComponent(cur));$('crumb').textContent='/'+cur;$('list').innerHTML=(cur?'<div class="fi" data-up="1">⮌ ..</div>':'')+it.map(f=>`<div class="fi" data-n="${esc(f.name)}" data-d="${f.dir?1:0}">${f.dir?'▸ ':'▪ '}${esc(f.name)} ${f.dir?'':`<small class="m">${f.size}b</small>`}</div>`).join('')}
+$('list').onclick=e=>{const el=e.target.closest('.fi');if(!el)return;if(el.dataset.up){cur=cur.split('/').slice(0,-1).join('/');ls()}else if(el.dataset.d=='1'){cur=full(el.dataset.n);ls()}else open_(full(el.dataset.n))};
+async function open_(p){file=p;$('fn').textContent=p;$('bar').style.display='flex';$('out').style.display='none';const x=ext(p);$('lang').textContent=LN[x]||x.toUpperCase();
+['rn','pv'].forEach(i=>$(i).style.display='none');$('sv').style.display='';
+if(['png','jpg','jpeg','gif','webp','svg','bmp'].includes(x)){$('view').innerHTML=`<img style="max-width:100%" src="/raw?path=${encodeURIComponent(p)}">`;$('sv').style.display='none';return}
+if(['mp4','webm','mov'].includes(x)){$('view').innerHTML=`<video controls style="max-width:100%" src="/raw?path=${encodeURIComponent(p)}"></video>`;$('sv').style.display='none';return}
+if(['mp3','wav','ogg'].includes(x)){$('view').innerHTML=`<audio controls src="/raw?path=${encodeURIComponent(p)}"></audio>`;$('sv').style.display='none';return}
+if(x=='pdf'){$('view').innerHTML=`<iframe src="/raw?path=${encodeURIComponent(p)}"></iframe>`;$('sv').style.display='none';return}
+const r=await api('/api/file?path='+encodeURIComponent(p));if(r.binary){$('view').innerHTML='<small class="m">Binary file — use Download.</small>';$('sv').style.display='none';return}
+$('view').innerHTML='<textarea id="ed" spellcheck="false"></textarea>';$('ed').value=r.content;
+if(['py','js','cpp','cc','c'].includes(x))$('rn').style.display='';if(['html','htm'].includes(x))$('pv').style.display='';
+$('ed').onkeydown=e=>{if(e.key=='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart;t.setRangeText('    ',s,t.selectionEnd,'end')}if((e.ctrlKey||e.metaKey)&&e.key=='s'){e.preventDefault();save()}}}
+async function save(){if(!file||!$('ed'))return;await api('/api/save',{path:file,content:$('ed').value});$('lang').textContent='SAVED ✔'}
+$('sv').onclick=save;
+$('rn').onclick=async()=>{await save();$('out').style.display='block';$('out').textContent='running...';$('out').textContent=(await api('/api/run',{path:file})).out};
+$('pv').onclick=async()=>{await save();let f=document.getElementById('pvf');if(!f){f=document.createElement('iframe');f.id='pvf';f.setAttribute('sandbox','allow-scripts allow-forms allow-modals');$('view').appendChild(f)}f.srcdoc=$('ed').value};
+$('dl').onclick=()=>{const a=document.createElement('a');a.href='/raw?path='+encodeURIComponent(file);a.download=file.split('/').pop();a.click()};
+$('rm').onclick=async()=>{if(confirm('Delete '+file+'?')){await api('/api/delete',{path:file});file=null;$('view').innerHTML='';$('bar').style.display='none';ls()}};
+$('nf').onclick=async()=>{const n=prompt('File name (e.g. app.py, index.html, main.cpp)');if(!n)return;await api('/api/save',{path:full(n),content:TPL[ext(n)]||''});await ls();open_(full(n))};
+$('nd').onclick=async()=>{const n=prompt('Folder name');if(n){await api('/api/mkdir',{path:full(n)});ls()}};
+$('up').onclick=()=>$('upi').click();$('upi').onchange=async e=>{for(const f of e.target.files){await fetch('/api/upload?path='+encodeURIComponent(cur)+'&name='+encodeURIComponent(f.name),{method:'POST',headers:{'X-Req':'1'},body:f})}e.target.value='';ls()};
+// ---------- UOBI tracker (login username = callsign) ----------
+let TM=null,TD=[],TK={},TLock=null,TFol=false,TOn=false,TW=null,TLast=null,TSent=0,TTick=null,TWake=null,TSk=0,TSeq=0,TAcq=false;
+const TC=['#8fd14f','#ffb000','#40c4ff','#ff6b9d','#b388ff','#ff8a3d'],tsl=ms=>new Promise(r=>setTimeout(r,ms));
+const tOld=m=>Date.now()/1000+TSk-m.ts>120,tById=n=>TD.find(m=>m.name===n);
+const tAgo=t=>{const s=Math.max(0,Math.round(Date.now()/1000+TSk-t));return s<60?s+' sec ago':s<3600?Math.round(s/60)+' min ago':Math.round(s/3600)+' hr ago'};
+function tState(s,t){$('tbox').dataset.s=s;if(t)$('thst').textContent=t;$('trl').style.display=s=='free'?'':'none'}
+function tInit(){$('tme').textContent=ME;if(TM)return;if(!window.L){$('tstt').textContent='Map library failed to load (internet required).';return}
+TM=L.map('tmap',{minZoom:2,worldCopyJump:true,scrollWheelZoom:'center',doubleClickZoom:'center',touchZoom:'center'}).setView([20,10],3);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:18,attribution:'Tiles © Esri'}).addTo(TM);
+if(window.ResizeObserver)new ResizeObserver(()=>TM.invalidateSize()).observe($('tbox'));
+TM.on('dragstart',()=>{if(TFol){TFol=false;TSeq++;TAcq=false;tState('free','MANUAL VIEW')}});
+$('tfit').onclick=()=>{if(!TD.length)return;TSeq++;TAcq=false;TFol=false;tState('free','MANUAL VIEW');TM.fitBounds(L.latLngBounds(TD.map(m=>[m.lat,m.lon])),{padding:[60,60],maxZoom:17})};
+$('trl').onclick=()=>{const t=tById(TLock)||TD.find(m=>!tOld(m))||TD[0];if(t)tAcq_(t.name)}}
+async function tAcq_(n){const my=++TSeq;TAcq=true;TLock=null;TFol=false;tPins(false);tState('search','SCANNING SATELLITE FEED');
+TM.flyTo([Math.random()*60-10,Math.random()*160-80],5,{duration:1.2});await tsl(1400);if(my!==TSeq)return;
+let t=tById(n);if(!t){TAcq=false;tState('idle','AWAITING SIGNAL');return}
+$('thst').textContent='TARGET DETECTED // ACQUIRING';TM.flyTo([t.lat,t.lon],17,{duration:3.2});await tsl(3500);if(my!==TSeq)return;
+t=tById(n);if(!t){TAcq=false;tState('idle','AWAITING SIGNAL');return}
+TLock=n;tState('lock','TARGET LOCKED');tPins(true);await tsl(900);if(my!==TSeq)return;
+TFol=true;TAcq=false;tState('track','TRACKING // '+n.toUpperCase());tPins(true)}
+function tPins(show){const ids=new Set(TD.map(m=>m.name));Object.keys(TK).forEach(k=>{if(!ids.has(k)){TM.removeLayer(TK[k]);delete TK[k]}});
+TD.forEach((m,i)=>{const old=tOld(m),c=TC[i%TC.length],sh=show&&TLock===m.name||(TLock===m.name),
+html=`<div class="pin${old?' off':''}${sh?' show':''}" style="--c:${c}"><i class="ring"></i><b class="dot"></b><div class="call"><b>${esc(m.name)}</b><span>${m.lat.toFixed(5)}, ${m.lon.toFixed(5)}</span><br><span>${old?'○ SIGNAL LOST':'● TRACKING'}</span></div></div>`;
+if(TK[m.name]){TK[m.name].setLatLng([m.lat,m.lon]);TK[m.name].setIcon(L.divIcon({className:'pinwrap',iconSize:[0,0],html}))}
+else TK[m.name]=L.marker([m.lat,m.lon],{icon:L.divIcon({className:'pinwrap',iconSize:[0,0],html}),interactive:false}).addTo(TM)})}
+async function loadTrk(){let j;try{j=await api('/api/locs')}catch(e){return}TD=j.list;TSk=j.now-Date.now()/1000;
+const on=TD.filter(m=>!tOld(m)).length;$('tcnt').textContent=on;
+$('tlist').innerHTML=TD.map((m,i)=>`<div class="op${tOld(m)?' off':''}" data-n="${esc(m.name)}" style="border-left-color:${TC[i%TC.length]}"><a target="_blank" rel="noopener" href="https://www.google.com/maps?q=${m.lat},${m.lon}">MAPS ↗</a><b>${tOld(m)?'○ ':'● '}${esc(m.name)}${m.name===TLock?' [LOCKED]':''}</b><br><code>${m.lat.toFixed(6)} | ${m.lon.toFixed(6)}</code><br><small class="m">${tAgo(m.ts)} • ±${Math.round(m.acc||0)}m${m.spd!=null?' • '+m.spd+' km/h':''}</small></div>`).join('')||'<small class="m">NO SIGNALS. Nobody is sharing a location right now.</small>';
+if(!TM)return;tPins(true);
+if(TLock&&!tById(TLock)){TSeq++;TAcq=false;TLock=null;TFol=false;$('trd').innerHTML='';tState('idle','AWAITING SIGNAL')}
+if(!TLock&&!TAcq&&TD.length&&$('tbox').dataset.s!='free'){const f=tById(ME)&&!tOld(tById(ME))?tById(ME):(TD.find(m=>!tOld(m))||TD[0]);tAcq_(f.name)}
+if(TLock){const t=tById(TLock);if(t){$('trd').innerHTML=`TARGET <b>${esc(t.name.toUpperCase())}</b><br>LAT <b>${t.lat.toFixed(6)}</b> LNG <b>${t.lon.toFixed(6)}</b><br>ACC <b>±${Math.round(t.acc||0)}m</b> SPD <b>${t.spd!=null?t.spd+' km/h':'0'}</b><br>UPD <b>${tAgo(t.ts)}</b>`;if(TFol&&TM.getCenter().distanceTo([t.lat,t.lon])>0.5)TM.panTo([t.lat,t.lon],{animate:true,duration:.8,noMoveStart:true})}}}
+$('tlist').onclick=e=>{if(e.target.closest('a'))return;const el=e.target.closest('.op');if(el&&TM)tAcq_(el.dataset.n)};
+async function tSend(){if(!TLast)return;const c=TLast;TSent=Date.now();try{await api('/api/loc',{lat:c.latitude,lng:c.longitude,acc:Math.round(c.accuracy||0),spd:c.speed==null||isNaN(c.speed)?null:+(c.speed*3.6).toFixed(1)});$('tstt').textContent='✅ Live share: '+c.latitude.toFixed(5)+', '+c.longitude.toFixed(5)}catch(e){$('tstt').textContent='❌ Server error (retrying)'}}
+function tStop(msg){if(TW!==null){navigator.geolocation.clearWatch(TW);TW=null}clearInterval(TTick);TTick=null;TLast=null;TOn=false;if(TWake){try{TWake.release()}catch(e){}TWake=null}
+if(msg)$('tstt').textContent=msg}
+function tStart(){if(!ME||TOn)return;tInit();if(!navigator.geolocation){$('tstt').textContent='This browser does not support location.';return}
+if(!window.isSecureContext){$('tstt').textContent='Location requires HTTPS or localhost (see README).';return}
+TOn=true;$('tstt').textContent='Waiting for location...';
+try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>TWake=w).catch(()=>{})}catch(e){}
+TW=navigator.geolocation.watchPosition(p=>{TLast=p.coords;if(Date.now()-TSent>3000)tSend()},err=>{if(err.code===1){tStop('Permission denied. Allow Location in your browser/site settings, then reload the page.')}else $('tstt').textContent='Searching for signal... (try an open area)'},{enableHighAccuracy:true,maximumAge:5000,timeout:30000});
+TTick=setInterval(()=>{if(TLast&&Date.now()-TSent>=5000)tSend()},5000)}
+function tAuto(){if(ME&&!TOn)tStart()}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&TOn)tSend()});
+
+// ---------- Friday: voice assistant ----------
+const uuid=()=>{try{if(crypto.randomUUID)return crypto.randomUUID()}catch(e){}return Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('')};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition,fa=$('fa');
+let FR=null,FOn=false,FBusy=false,FMute=0,FQ=[],FI=0,FVoice=null;
+const fst=t=>{$('fs').textContent=t};
+function fUi(){$('fv').textContent='🎙 Friday: '+(FOn?'ON':'OFF');$('fv').style.background=FOn?'var(--g)':'';$('fv').style.color=FOn?'#000':''}
+function fPick(){const vs=(window.speechSynthesis?speechSynthesis.getVoices():[]).filter(v=>/^en/i.test(v.lang));FVoice=vs.find(v=>/female|zira|samantha|aria|jenny|karen|moira|tessa|google uk english female/i.test(v.name))||vs.find(v=>/^en-(IN|GB|US)/i.test(v.lang))||vs[0]||null}
+if(window.speechSynthesis){speechSynthesis.onvoiceschanged=fPick;fPick()}
+function say(t){return new Promise(r=>{fst('Friday: '+t);if(!window.speechSynthesis){r();return}
+const u=new SpeechSynthesisUtterance(t);if(FVoice){u.voice=FVoice;u.lang=FVoice.lang}else u.lang='en-US';u.rate=1;u.pitch=1.05;
+FBusy=true;const done=()=>{FBusy=false;FMute=Date.now()+700;r()};u.onend=done;u.onerror=done;speechSynthesis.speak(u)})}
+async function sayLong(t){let c='';for(const p of t.replace(/[*#`_]/g,'').split(/(?<=[.!?])\s+|\n+/)){if(!FOn)return;if((c+' '+p).length>180){if(c)await say(c);c=p}else c+=(c?' ':'')+p}if(c&&FOn)await say(c)}
+async function runSummary(speak){document.querySelector('#nav button[data-t="vis"]').click();$('sm').style.display='block';$('sm').textContent='...';
+try{const r=await api('/api/summary',{});$('sm').textContent=(r.ai?'[FRIDAY]\n':'[FRIDAY - local]\n')+r.summary;if(speak)await sayLong(r.summary)}catch(e){$('sm').textContent='error';if(speak)await say('Sorry, I could not get the summary.')}}
+function fPlay(i){FI=(i+FQ.length)%FQ.length;fa.src='/raw?path='+encodeURIComponent(FQ[FI]);fa.play().then(()=>fst('♪ Now playing: '+FQ[FI].split('/').pop())).catch(()=>say('The browser blocked playback. Tap the Friday button once and try again.'))}
+fa.onended=()=>{if(FQ.length)fPlay(FI+1)};
+async function fMusic(t){let l;try{l=await api('/api/music')}catch(e){await say('Sorry, I could not read the vault.');return}
+if(!l.length){await say('There are no MP3 files in your vault.');return}
+FQ=l;const w=t.replace(/\b(please|play|some|the|music|song|songs|gaana|gana|a|my)\b/g,' ').split(/\s+/).filter(Boolean);
+const hit=w.length?FQ.findIndex(f=>w.every(x=>f.toLowerCase().includes(x))):-1;
+await say(hit>=0?'Playing '+FQ[hit].split('/').pop().replace(/\.mp3$/i,'')+'.':'Playing music from your vault.');fPlay(hit>=0?hit:0)}
+async function fCmd(raw){const m=raw.toLowerCase().match(/fri\s?day|fry\s?day/);if(!m)return;const t=raw.toLowerCase().replace(/fri\s?day|fry\s?day/g,' ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+if(!t)return say('Yes?');
+if(/summary|report|status/.test(t))return runSummary(true);
+if(/stop|pause|quiet|silence/.test(t)){fa.pause();speechSynthesis.cancel();return say('Okay, stopped.')}
+if(/next|skip/.test(t)&&FQ.length){await say('Next song.');return fPlay(FI+1)}
+if(/play|music|song|gaana|gana/.test(t))return fMusic(t);
+say('Sorry, try: Friday show summary, Friday play music, or Friday stop.')}
+function fStart(){
+if(!SR){fst('Voice commands need Chrome, Edge or Safari.');return}
+if(!window.isSecureContext){fst('Voice needs HTTPS or localhost (see README).');return}
+const deny=()=>{FOn=false;fUi();fst('Microphone permission denied. Allow the microphone in your browser/site settings, then tap Friday again.')};
+const go=()=>{FOn=true;fUi();FR=new SR();FR.lang='en-IN';FR.continuous=true;FR.interimResults=false;
+FR.onresult=e=>{if(FBusy||Date.now()<FMute)return;const t=e.results[e.results.length-1][0].transcript;fst('Heard: '+t);fCmd(t)};
+FR.onerror=e=>{if(e.error=='not-allowed'||e.error=='service-not-allowed')deny()};
+FR.onend=()=>{if(FOn)setTimeout(()=>{try{FR.start()}catch(e){}},300)};
+try{FR.start()}catch(e){}say('Friday online. Say Friday, show summary, or Friday, play music.')};
+if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)navigator.mediaDevices.getUserMedia({audio:true}).then(st=>{st.getTracks().forEach(x=>x.stop());go()}).catch(deny);else go()}
+$('fv').onclick=()=>{if(FOn){FOn=false;try{FR.stop()}catch(e){}if(window.speechSynthesis)speechSynthesis.cancel();fUi();fst('Friday is off.')}else fStart()};
+showLogin();
+</script></body></html>
